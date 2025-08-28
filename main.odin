@@ -6,7 +6,7 @@ import "core:fmt"
 import "core:os"
 
 // Optionally, there's swizzle with `xyzw` or `rgba`, but only for arrays with length <=4 elements
-// TODO: make an array alias instead of structs
+// TODO: make an array alias instead of structs (mind `distinct`)
 Vec3 :: struct {
 	x, y, z: f32,
 }
