@@ -5,7 +5,8 @@ package main
 import "core:fmt"
 import "core:os"
 
-// Optionally, there's swizzle with `xyzw` or `rgba`, but only for arrays with >=4 elements
+// Optionally, there's swizzle with `xyzw` or `rgba`, but only for arrays with length <=4 elements
+// TODO: make an array alias instead of structs
 Vec3 :: struct {
 	x, y, z: f32,
 }
@@ -136,7 +137,7 @@ write_to_file :: proc(image: [WIDTH][HEIGHT]Vec3) {
 	for y := 0; y < len(image); y += 1 {
 		for x := 0; x < len(image[0]); x += 1 {
 			col := image[x][y]
-			// Swizzle here?
+			// Swizzle here? + check array programming everywhere
 			r, g, b := int(col.x * 255), int(col.y * 255), int(col.z * 255)
 			os.write_string(fd, fmt.tprintf("%d %d %d ", r, g, b))
 		}
