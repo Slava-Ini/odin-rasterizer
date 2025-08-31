@@ -2,6 +2,7 @@
 
 package main
 
+import "core:crypto"
 import "core:fmt"
 import "core:os"
 
@@ -66,23 +67,22 @@ create_triangle_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
 // TODO: start here
 // Try several approaches:
 // + Point in polygon
-// - Cross product (same side)
+// - Edge function (same side)
+//   + Cross product
+//   - Dot product
 // - Barycentric coordinates
 //
 // Check which one is actually edge-function (half-space test)
 
 point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
-	return point_in_polygon(tri, p)
+	// return point_in_polygon(tri, p)
+	return edge_function_cross_product(tri, p)
 }
 
 point_in_polygon :: proc(tri: Triangle, p: Vec2) -> bool {
 	c := 0
 	xp, yp := p.x, p.t
-	edges := [3][2]Vec2{
-		[2]Vec2{tri.a, tri.b},
-		[2]Vec2{tri.b, tri.c},
-		[2]Vec2{tri.c, tri.a}
-	}
+	edges := [3][2]Vec2{[2]Vec2{tri.a, tri.b}, [2]Vec2{tri.b, tri.c}, [2]Vec2{tri.c, tri.a}}
 
 	for edge in edges {
 		x1, y1 := edge[0].x, edge[0].t
@@ -94,6 +94,31 @@ point_in_polygon :: proc(tri: Triangle, p: Vec2) -> bool {
 	}
 
 	return c % 2 == 1
+}
+
+// TODO: here
+// - Put the info to Jupyter
+//   - E-book writings
+//   - All open wiki and other pages
+//   - Do a little refactoring
+//   - Check older vector writings (and move them to Jupyter, at least partially?)
+// Learn more about everything
+edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
+	xp, yp := p.x, p.t
+	edges := [3][2]Vec2{[2]Vec2{tri.a, tri.b}, [2]Vec2{tri.b, tri.c}, [2]Vec2{tri.c, tri.a}}
+
+	res := [3]bool{}
+
+	for edge, index in edges {
+		x1, y1 := edge[0].x, edge[0].t
+		x2, y2 := edge[1].x, edge[1].t
+
+		cross_product := (x2 - x1) * (yp - y1) - (y2 - y1) * (xp - x1)
+		res[index] = cross_product >= 0
+	}
+
+	// TODO: wonder how we could make it easier
+	return res[0] && res[1] && res[2]
 }
 
 // point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
