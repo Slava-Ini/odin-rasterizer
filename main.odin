@@ -68,6 +68,8 @@ create_triangle_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
 // + Point in polygon
 // - Cross product (same side)
 // - Barycentric coordinates
+//
+// Check which one is actually edge-function (half-space test)
 
 point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
 	return point_in_polygon(tri, p)
