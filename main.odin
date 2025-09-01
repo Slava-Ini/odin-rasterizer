@@ -96,17 +96,13 @@ point_in_polygon :: proc(tri: Triangle, p: Vec2) -> bool {
 	return c % 2 == 1
 }
 
-// TODO: here
-// - Put the info to Jupyter
-//   - E-book writings
-//   - All open wiki and other pages
+// TODO: 
 //   - Do a little refactoring
 //   - Check older vector writings (and move them to Jupyter, at least partially?)
-// Learn more about everything
+//   - Learn more about everything
 edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 	xp, yp := p.x, p.t
 	edges := [3][2]Vec2{[2]Vec2{tri.a, tri.b}, [2]Vec2{tri.b, tri.c}, [2]Vec2{tri.c, tri.a}}
-
 	res := [3]bool{}
 
 	for edge, index in edges {
