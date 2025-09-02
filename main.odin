@@ -67,19 +67,21 @@ create_triangle_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
 // TODO: start here
 // Try several approaches:
 // + Point in polygon
-// - Edge function (same side)
+// + Edge function (same side)
 //   + Cross product
-//   - Dot product
+//   + Dot product
 // - Barycentric coordinates
+// - Vector addition method (too complex?) ()[https://www.youtube.com/watch?v=HYAgJN3x4GA]
 //
 // Check which one is actually edge-function (half-space test)
 
 point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
-	// return point_in_polygon(tri, p)
-	return edge_function_cross_product(tri, p)
+	// return ray_casting(tri, p)
+	return edge_function_dot_product(tri, p)
+	// return edge_function_cross_product(tri, p)
 }
 
-point_in_polygon :: proc(tri: Triangle, p: Vec2) -> bool {
+ray_casting :: proc(tri: Triangle, p: Vec2) -> bool {
 	c := 0
 	xp, yp := p.x, p.t
 	edges := [3][2]Vec2{[2]Vec2{tri.a, tri.b}, [2]Vec2{tri.b, tri.c}, [2]Vec2{tri.c, tri.a}}
@@ -98,7 +100,6 @@ point_in_polygon :: proc(tri: Triangle, p: Vec2) -> bool {
 
 // TODO: 
 //   - Do a little refactoring
-//   - Check older vector writings (and move them to Jupyter, at least partially?)
 //   - Learn more about everything
 edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 	xp, yp := p.x, p.t
@@ -110,14 +111,46 @@ edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 		x2, y2 := edge[1].x, edge[1].t
 
 		cross_product := (x2 - x1) * (yp - y1) - (y2 - y1) * (xp - x1)
+
 		res[index] = cross_product >= 0
 	}
 
-	// TODO: wonder how we could make it easier
+	// Note: Can be improved by checking if all three are either bool
 	return res[0] && res[1] && res[2]
 }
 
-// point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
+
+// TODO: explore how the math is simplified to this from (cos and stuff)
+dot :: proc(a, b: Vec2) -> f32 {
+	return a.t * b.t + a.x * b.x
+}
+
+perpendicular :: proc(vec: ^Vec2) {
+	vec.x, vec.t = vec.t, -vec.x
+}
+
+edge_function_dot_product :: proc(tri: Triangle, p: Vec2) -> bool {
+	xp, yp := p.x, p.t
+	edges := [3][2]Vec2{[2]Vec2{tri.a, tri.b}, [2]Vec2{tri.b, tri.c}, [2]Vec2{tri.c, tri.a}}
+	res := [3]bool{}
+
+	for e, i in edges {
+		x1, y1 := e[0].x, e[0].t
+		x2, y2 := e[1].x, e[1].t
+
+		ap := Vec2{xp - x1, yp - y1}
+		ab := Vec2{x2 - x1, y2 - y1}
+		perpendicular(&ab)
+
+		// Note: here we can change `<` to `>=` but then the `return` check will change as well
+		//       It depends on how to rotate the triangle in order to get how we are checking
+		res[i] = dot(ap, ab) < 0
+	}
+
+	return res[0] && res[1] && res[2]
+}
+
+// baricentric? :: proc(tri: Triangle, p: Vec2) -> bool {
 // 	// Rename for clarity
 // 	a, b, c := tri.a, tri.b, tri.c
 
