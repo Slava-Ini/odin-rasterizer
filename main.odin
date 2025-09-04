@@ -125,6 +125,7 @@ dot :: proc(a, b: Vec2) -> f32 {
 	return a.t * b.t + a.x * b.x
 }
 
+// Note: rotating clockwise
 perpendicular :: proc(vec: ^Vec2) {
 	vec.x, vec.t = vec.t, -vec.x
 }
