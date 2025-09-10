@@ -106,9 +106,9 @@ edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 	edges := [3][2]Vec2{[2]Vec2{tri.a, tri.b}, [2]Vec2{tri.b, tri.c}, [2]Vec2{tri.c, tri.a}}
 	res := [3]bool{}
 
-	for edge, index in edges {
-		x1, y1 := edge[0].x, edge[0].t
-		x2, y2 := edge[1].x, edge[1].t
+	for e, index in edges {
+		x1, y1 := e[0].x, e[0].t
+		x2, y2 := e[1].x, e[1].t
 
 		cross_product := (x2 - x1) * (yp - y1) - (y2 - y1) * (xp - x1)
 
@@ -151,7 +151,7 @@ edge_function_dot_product :: proc(tri: Triangle, p: Vec2) -> bool {
 	return res[0] && res[1] && res[2]
 }
 
-// baricentric? :: proc(tri: Triangle, p: Vec2) -> bool {
+// baricentric :: proc(tri: Triangle, p: Vec2) -> bool {
 // 	// Rename for clarity
 // 	a, b, c := tri.a, tri.b, tri.c
 
@@ -160,7 +160,8 @@ edge_function_dot_product :: proc(tri: Triangle, p: Vec2) -> bool {
 // 	v1 := Vec2{b.x - a.x, b.t - a.t}
 // 	v2 := Vec2{p.x - a.x, p.t - a.t}
 
-// 	// Compute dot products
+// 	// Compute dot products - check if it's really dot product
+//     Probably not - [link](https://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html)
 // 	d00 := v0.x*v0.x + v0.t*v0.t
 // 	d01 := v0.x*v1.x + v0.t*v1.t
 // 	d11 := v1.x*v1.x + v1.t*v1.t
