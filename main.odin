@@ -64,21 +64,22 @@ create_triangle_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
 	return image
 }
 
-// TODO: start here
-// Try several approaches:
-// + Point in polygon
-// + Edge function (same side)
-//   + Cross product
-//   + Dot product
-// - Barycentric coordinates
-// - Vector addition method (too complex?) ()[https://www.youtube.com/watch?v=HYAgJN3x4GA]
-//
-// Check which one is actually edge-function (half-space test)
-
 point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
+	// -- Method 1: Ray Casting
+	//    Cast a ray in random direction to count how many times the ray intersects the triangle
 	// return ray_casting(tri, p)
-	return edge_function_dot_product(tri, p)
+	 
+	// -- Method 2: Edge function using dot product
+	//    Find on which side of every edge the point is using dot product and rotation
+	// return edge_function_dot_product(tri, p)
+	 
+	// -- Method 3: Edge function using cross product
+	//    Find on which side of every edge the point is using cross product
 	// return edge_function_cross_product(tri, p)
+	 
+	// -- Method 4: Barycentric Coordinates
+	//    Find barycentric weights to determine wheather the point is in triangle
+	return barycentric(tri, p)
 }
 
 ray_casting :: proc(tri: Triangle, p: Vec2) -> bool {
@@ -120,7 +121,6 @@ edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 }
 
 
-// TODO: explore how the math is simplified to this from (cos and stuff)
 dot :: proc(a, b: Vec2) -> f32 {
 	return a.t * b.t + a.x * b.x
 }
@@ -151,35 +151,26 @@ edge_function_dot_product :: proc(tri: Triangle, p: Vec2) -> bool {
 	return res[0] && res[1] && res[2]
 }
 
-// baricentric :: proc(tri: Triangle, p: Vec2) -> bool {
-// 	// Rename for clarity
-// 	a, b, c := tri.a, tri.b, tri.c
+barycentric :: proc(t: Triangle, p: Vec2) -> bool {
+	xp, yp := p.x, p.t
+	x1, y1 := t.a.x, t.a.t
+	x2, y2 := t.b.x, t.b.t
+	x3, y3 := t.c.x, t.c.t
 
-// 	// Compute vectors
-// 	v0 := Vec2{c.x - a.x, c.t - a.t}
-// 	v1 := Vec2{b.x - a.x, b.t - a.t}
-// 	v2 := Vec2{p.x - a.x, p.t - a.t}
+	denom := (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3)
 
-// 	// Compute dot products - check if it's really dot product
-//     Probably not - [link](https://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html)
-// 	d00 := v0.x*v0.x + v0.t*v0.t
-// 	d01 := v0.x*v1.x + v0.t*v1.t
-// 	d11 := v1.x*v1.x + v1.t*v1.t
-// 	d20 := v2.x*v0.x + v2.t*v0.t
-// 	d21 := v2.x*v1.x + v2.t*v1.t
+	if (denom <= 0) {
+		return false
+	}
 
-// 	// Compute barycentric coordinates
-// 	denom := d00 * d11 - d01 * d01
-// 	if denom == 0 {
-// 		return false // degenerate triangle
-// 	}
+	a := ((xp - x3) * (y2 - y3) + (x3 - x2) * (yp - y3)) / denom
+	b := ((x1 - x3) * (yp - y3) + (x3 - xp) * (y1 - y3)) / denom
+	c := 1 - a - b
 
-// 	v := (d11 * d20 - d01 * d21) / denom
-// 	w := (d00 * d21 - d01 * d20) / denom
-// 	u := 1.0 - v - w
-
-// 	return u >= 0 && v >= 0 && w >= 0
-// }
+	return a >= 0 && a <= 1 && b >= 0 && b <= 1 && c >= 0 && c <= 1
+	// -- Note: We might as well omit 1 comparison as sum of weights can't exceed 1
+	// return a >= 0 && b >= 0 && c >= 0
+}
 
 write_to_file :: proc(image: [WIDTH][HEIGHT]Vec3) {
 	write := os.write_entire_file("image.ppm", {})
