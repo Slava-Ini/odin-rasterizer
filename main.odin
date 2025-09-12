@@ -6,6 +6,8 @@ import "core:crypto"
 import "core:fmt"
 import "core:os"
 
+import rl "vendor:raylib"
+
 Vec3 :: distinct [3]f32
 Vec2 :: distinct [2]f32
 Triangle :: struct {
@@ -15,6 +17,19 @@ Triangle :: struct {
 WIDTH, HEIGHT :: 64, 64
 
 main :: proc() {
+	rl.InitWindow(1_000, 1_000, "Odin Rasterizer")
+	// texture := rl.LoadTextureFromImage(rl.GenImageColor(1_000, 1_000, rl.BLACK))
+  // text_byte_array := [WIDTH * HEIGHT * 4]byte{}
+
+	for !rl.WindowShouldClose() {
+		// rl.UpdateTexture(texture, ([^]byte)(im_scarfy_anim.data)[next_frame_data_offset:])
+		// rl.UpdateTexture(texture, &text_byte_array)
+		rl.BeginDrawing()
+		rl.ClearBackground(rl.BLACK)
+		rl.EndDrawing()
+	}
+	rl.CloseWindow()
+
 	image := create_triangle_image()
 	write_to_file(image)
 }
