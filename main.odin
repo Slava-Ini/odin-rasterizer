@@ -8,8 +8,9 @@ import "core:os"
 
 import rl "vendor:raylib"
 
-Vec3 :: distinct [3]f32
 Vec2 :: distinct [2]f32
+Vec3 :: distinct [3]f32
+Color :: distinct [4]u8
 Triangle :: struct {
 	a, b, c: Vec2,
 }
@@ -18,20 +19,43 @@ WIDTH, HEIGHT :: 64, 64
 
 main :: proc() {
 	rl.InitWindow(1_000, 1_000, "Odin Rasterizer")
-	// texture := rl.LoadTextureFromImage(rl.GenImageColor(1_000, 1_000, rl.BLACK))
-  // text_byte_array := [WIDTH * HEIGHT * 4]byte{}
+	texture := rl.LoadTextureFromImage(rl.GenImageColor(WIDTH, HEIGHT, rl.BLACK))
+	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
+	text_byte_array := [WIDTH * HEIGHT * 4]byte{}
+	img := create_triangle_image()
+
+	i := 0
+
+	for y := 0; y < len(img); y += 1 {
+		for x := 0; x < len(img[0]); x += 1 {
+			col := img[x][y]
+			r, g, b := byte(col.r * 255), byte(col.g * 255), byte(col.b * 255)
+			// TODO: to improve and refactor
+			text_byte_array[i] = r
+			text_byte_array[i + 1] = g
+			text_byte_array[i + 2] = b
+			text_byte_array[i + 3] = 255
+			i += 4
+		}
+	}
+
+	src := rl.Rectangle{0, 0, f32(texture.width), f32(texture.height)}
+	dst := rl.Rectangle{0, 0, f32(rl.GetScreenWidth()), f32(rl.GetScreenHeight())} 
+	origin := rl.Vector2{0, 0}
 
 	for !rl.WindowShouldClose() {
-		// rl.UpdateTexture(texture, ([^]byte)(im_scarfy_anim.data)[next_frame_data_offset:])
-		// rl.UpdateTexture(texture, &text_byte_array)
+		rl.UpdateTexture(texture, &text_byte_array)
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
+		// rl.DrawTexture(texture, 0, 0, rl.WHITE)
+		rl.DrawTexturePro(texture, src, dst, origin, 0, rl.WHITE)
+		rl.DrawFPS(10, 10)
 		rl.EndDrawing()
 	}
 	rl.CloseWindow()
 
-	image := create_triangle_image()
-	write_to_file(image)
+	// image := create_triangle_image()
+	// write_to_file(image)
 }
 
 create_test_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
