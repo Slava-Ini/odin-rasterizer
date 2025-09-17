@@ -3,6 +3,23 @@ package main
 Vec2 :: [2]f32
 Vec3 :: [3]f32
 
+point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
+	// -- Method 1: Ray Casting
+	//    Cast a ray in random direction to count how many times the ray intersects the triangle
+	// return ray_casting(tri, p)
+
+	// -- Method 2: Edge function using dot product
+	//    Find on which side of every edge the point is using dot product and rotation
+	// return edge_function_dot_product(tri, p)
+
+	// -- Method 3: Edge function using cross product
+	//    Find on which side of every edge the point is using cross product
+	// return edge_function_cross_product(tri, p)
+
+	// -- Method 4: Barycentric Coordinates
+	//    Find barycentric weights to determine wheather the point is in triangle
+	return barycentric(tri, p)
+}
 
 // Note: rotating clockwise
 perpendicular :: proc(vec: ^Vec2) {

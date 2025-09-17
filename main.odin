@@ -22,6 +22,10 @@ main :: proc() {
 	text_byte_array := [WIDTH * HEIGHT * 4]byte{}
 	img := create_triangle_image()
 
+	// 1. new_render_target(w, h) -> creates new RenderTarget struct  
+	// 2. new_scene(models) -> creates a new scene
+	// 3. scene_to_pixels(scene) -> converts scene to pixels
+
 	i := 0
 
 	for y := 0; y < len(img); y += 1 {
@@ -37,12 +41,9 @@ main :: proc() {
 		}
 	}
 
-	i = 0
-
 	src := rl.Rectangle{0, 0, f32(texture.width), f32(texture.height)}
 	dst := rl.Rectangle{0, 0, f32(rl.GetScreenWidth()), f32(rl.GetScreenHeight())}
 	origin := rl.Vector2{0, 0}
-
 
 	for !rl.WindowShouldClose() {
 		rl.UpdateTexture(texture, &text_byte_array)
@@ -54,21 +55,27 @@ main :: proc() {
 		rl.EndDrawing()
 	}
 	rl.CloseWindow()
-
-	// image := create_triangle_image()
-	// write_to_file(image)
 }
 
-create_test_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
-	for y := 0; y < HEIGHT; y += 1 {
-		for x := 0; x < WIDTH; x += 1 {
-			r: f32 = f32(x) / (WIDTH - 1)
-			g: f32 = f32(y) / (HEIGHT - 1)
-			image[x][y] = {r, g, 0}
-		}
-	}
+RenderTarget :: struct {
+	width:  u16,
+	height: u16,
+}
+Model :: struct {}
+Scene :: struct {
+	colors: [WIDTH][HEIGHT]Vec3,
+}
 
-	return image
+// TODO: play with polymorphysm here
+new_render_target :: proc(width, height: u16) -> RenderTarget {
+	return RenderTarget{width = width, height = height}
+}
+new_scene :: proc(target: RenderTarget) -> Scene {
+	return Scene{}
+}
+// TODO: think what to do with `dynamic`
+scene_to_pixels :: proc(scene: Scene) -> [dynamic]byte {
+	return {}
 }
 
 create_triangle_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
@@ -91,43 +98,5 @@ create_triangle_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
 	}
 
 	return image
-}
-
-point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
-	// -- Method 1: Ray Casting
-	//    Cast a ray in random direction to count how many times the ray intersects the triangle
-	// return ray_casting(tri, p)
-
-	// -- Method 2: Edge function using dot product
-	//    Find on which side of every edge the point is using dot product and rotation
-	// return edge_function_dot_product(tri, p)
-
-	// -- Method 3: Edge function using cross product
-	//    Find on which side of every edge the point is using cross product
-	// return edge_function_cross_product(tri, p)
-
-	// -- Method 4: Barycentric Coordinates
-	//    Find barycentric weights to determine wheather the point is in triangle
-	return barycentric(tri, p)
-}
-
-write_to_file :: proc(image: [WIDTH][HEIGHT]Vec3) {
-	write := os.write_entire_file("image.ppm", {})
-	fd, op_err := os.open("image.ppm", os.O_RDWR)
-	defer os.close(fd)
-
-	if op_err != nil {
-		fmt.println("ERROR")
-	}
-
-	os.write_string(fd, fmt.tprintf("P3 %d %d 255 ", WIDTH, HEIGHT))
-
-	for y := 0; y < len(image); y += 1 {
-		for x := 0; x < len(image[0]); x += 1 {
-			col := image[x][y]
-			r, g, b := int(col.r * 255), int(col.g * 255), int(col.b * 255)
-			os.write_string(fd, fmt.tprintf("%d %d %d ", r, g, b))
-		}
-	}
 }
 
