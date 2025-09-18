@@ -1,6 +1,6 @@
 #+feature dynamic-literals
 
-package main
+package rasterizer
 
 import "core:crypto"
 import "core:fmt"
@@ -99,4 +99,3 @@ create_triangle_image :: proc() -> (image: [WIDTH][HEIGHT]Vec3) {
 
 	return image
 }
-

@@ -1,4 +1,4 @@
-package main
+package rasterizer
 
 import "core:os"
 import "core:fmt"
