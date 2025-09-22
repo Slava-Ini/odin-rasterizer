@@ -4,6 +4,8 @@ package rasterizer
 
 import "core:crypto"
 import "core:fmt"
+import "core:math/linalg"
+import "core:math/rand"
 import "core:os"
 
 import rl "vendor:raylib"
@@ -16,8 +18,8 @@ Triangle :: struct {
 // W, H :: 8, 8
 // W, H :: 16, 16
 // W, H :: 32, 32
-W, H :: 64, 64
-// W, H :: 128, 128
+// W, H :: 64, 64
+W, H :: 128, 128
 // W, H :: 256, 256
 
 main :: proc() {
@@ -25,7 +27,8 @@ main :: proc() {
 	texture := rl.LoadTextureFromImage(rl.GenImageColor(W, H, rl.BLACK))
 	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
 
-	scene := new_scene({})
+	models := gen_triangles(5)
+	scene := new_scene(models[:])
 	text_byte_arr := scene_to_pixels(scene)
 
 	src := rl.Rectangle{0, 0, f32(texture.width), f32(texture.height)}
@@ -45,8 +48,8 @@ main :: proc() {
 }
 
 Model :: struct {
-	coord: Vec3,
-	color: Vec3,
+	triangle: Triangle,
+	color:    Vec3,
 }
 
 Scene :: struct {
@@ -55,25 +58,17 @@ Scene :: struct {
 
 new_scene :: proc(models: []Model) -> Scene {
 	colors := [W * H]Vec3{}
-
-	// TODO: change to models
-	blue: Vec3 = {0, 0, 1}
 	black: Vec3 = {0, 0, 0}
-
-	triangle := Triangle {
-		a = Vec2{0.2 * W, 0.2 * H},
-		b = Vec2{0.9 * W, 0.4 * H},
-		c = Vec2{0.4 * W, 0.8 * H},
-	}
 
 	for i := 0; i < W * H; i += 1 {
 		x := i % W
 		y := i / W
 
-		if point_in_triangle(triangle, Vec2{f32(x), f32(y)}) {
-			colors[i] = blue
-		} else {
-			colors[i] = black
+		for model in models {
+			using model
+			if point_in_triangle(triangle, Vec2{f32(x), f32(y)}) {
+				colors[i] = color
+			}
 		}
 	}
 
@@ -88,6 +83,43 @@ scene_to_pixels :: proc(using scene: Scene) -> (tb_arr: [W * H * 4]byte) {
 		tb_arr[j + 1] = g
 		tb_arr[j + 2] = b
 		tb_arr[j + 3] = 255
+	}
+
+	return
+}
+
+gen_triangles :: proc($N: u16) -> (triangles: [N]Model) {
+	triangle_is_valid :: proc(a: Vec2, b: Vec2, c: Vec2) -> bool {
+		if (a == b || b == c || a == c) {
+			return false
+		}
+
+		// Calculate the area of the triangle using the determinant method
+		area := abs((a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2.0)
+
+		return area > 100
+	}
+
+	random_vec2 :: proc() -> Vec2 {
+		return Vec2{rand.float32() * f32(W), rand.float32() * f32(H)}
+	}
+
+	generate_triangle :: proc() -> Triangle {
+		for {
+			a := random_vec2()
+			b := random_vec2()
+			c := random_vec2()
+			if triangle_is_valid(a, b, c) {
+				return Triangle{a, b, c}
+			}
+		}
+	}
+
+	for i: u16 = 0; i < N; i += 1 {
+		triangles[i] = Model {
+			color    = Vec3{rand.float32(), rand.float32(), rand.float32()},
+			triangle = generate_triangle(),
+		}
 	}
 
 	return
