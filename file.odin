@@ -1,9 +1,9 @@
 package rasterizer
 
-import "core:os"
 import "core:fmt"
+import "core:os"
 
-write_to_file :: proc(image: [WIDTH][HEIGHT]Vec3) {
+write_to_file :: proc(image: [W][H]Vec3) {
 	write := os.write_entire_file("image.ppm", {})
 	fd, op_err := os.open("image.ppm", os.O_RDWR)
 	defer os.close(fd)
@@ -12,7 +12,7 @@ write_to_file :: proc(image: [WIDTH][HEIGHT]Vec3) {
 		fmt.println("ERROR")
 	}
 
-	os.write_string(fd, fmt.tprintf("P3 %d %d 255 ", WIDTH, HEIGHT))
+	os.write_string(fd, fmt.tprintf("P3 %d %d 255 ", W, H))
 
 	for y := 0; y < len(image); y += 1 {
 		for x := 0; x < len(image[0]); x += 1 {
@@ -22,3 +22,4 @@ write_to_file :: proc(image: [WIDTH][HEIGHT]Vec3) {
 		}
 	}
 }
+
