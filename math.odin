@@ -111,18 +111,19 @@ edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 	return res[0] && res[1] && res[2]
 }
 
-lerp :: proc(min, max, v: f32) -> f32 {
+clamp :: proc(v, min, max: f32) -> f32 {
 	return math.max(min, math.min(max, v))
 }
 
 import "core:testing"
 
 @(test)
-lerp_test :: proc(t: ^testing.T) {
-	testing.expect(t, lerp(0, 1, 3) == 1)
-	testing.expect(t, lerp(0, 1, 1.1) == 1)
-	testing.expect(t, lerp(0, 1, 0.9) == 0.9)
-	testing.expect(t, lerp(0, 1, 0.5) == 0.5)
-	testing.expect(t, lerp(0, 1, -1) == 0)
-	testing.expect(t, lerp(0, 1, -1.2) == 0)
+clamp_test :: proc(t: ^testing.T) {
+	testing.expect(t, clamp(3, 0, 1) == 1)
+	testing.expect(t, clamp(1.1, 0, 1) == 1)
+	testing.expect(t, clamp(0.9, 0, 1) == 0.9)
+	testing.expect(t, clamp(0.5, 0, 1) == 0.5)
+	testing.expect(t, clamp(-1, 0, 1) == 0)
+	testing.expect(t, clamp(-1.2, 0, 1) == 0)
 }
+

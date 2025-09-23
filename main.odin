@@ -18,8 +18,8 @@ Triangle :: struct {
 // W, H :: 8, 8
 // W, H :: 16, 16
 // W, H :: 32, 32
-// W, H :: 64, 64
-W, H :: 128, 128
+W, H :: 64, 64
+// W, H :: 128, 128
 // W, H :: 256, 256
 
 main :: proc() {
@@ -27,8 +27,9 @@ main :: proc() {
 	texture := rl.LoadTextureFromImage(rl.GenImageColor(W, H, rl.BLACK))
 	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
 
-	models := gen_triangles(5)
-	scene := new_scene(models[:])
+	// TODO: make bounding optimization + refactor of model creation
+	models := gen_triangles(15)
+	scene := new_scene(&models)
 	text_byte_arr := scene_to_pixels(scene)
 
 	rl.SetTargetFPS(60)
@@ -58,7 +59,7 @@ Scene :: struct {
 	colors: [W * H]Vec3,
 }
 
-new_scene :: proc(models: []Model) -> Scene {
+new_scene :: proc(models: ^[15]Model) -> Scene {
 	colors := [W * H]Vec3{}
 	black: Vec3 = {0, 0, 0}
 
@@ -66,8 +67,9 @@ new_scene :: proc(models: []Model) -> Scene {
 		x := i % W
 		y := i / W
 
-		for model in models {
+		for &model in models {
 			using model
+
 			if point_in_triangle(triangle, Vec2{f32(x), f32(y)}) {
 				colors[i] = color
 			}
@@ -111,6 +113,7 @@ gen_triangles :: proc($N: u16) -> (triangles: [N]Model) {
 			a := random_vec2()
 			b := random_vec2()
 			c := random_vec2()
+
 			if triangle_is_valid(a, b, c) {
 				return Triangle{a, b, c}
 			}
