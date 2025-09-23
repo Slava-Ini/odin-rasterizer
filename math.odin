@@ -1,5 +1,7 @@
 package rasterizer
 
+import math "core:math/linalg"
+
 Vec2 :: [2]f32
 Vec3 :: [3]f32
 
@@ -107,4 +109,20 @@ edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 
 	// Note: Can be improved by checking if all three are either bool
 	return res[0] && res[1] && res[2]
+}
+
+lerp :: proc(min, max, v: f32) -> f32 {
+	return math.max(min, math.min(max, v))
+}
+
+import "core:testing"
+
+@(test)
+lerp_test :: proc(t: ^testing.T) {
+	testing.expect(t, lerp(0, 1, 3) == 1)
+	testing.expect(t, lerp(0, 1, 1.1) == 1)
+	testing.expect(t, lerp(0, 1, 0.9) == 0.9)
+	testing.expect(t, lerp(0, 1, 0.5) == 0.5)
+	testing.expect(t, lerp(0, 1, -1) == 0)
+	testing.expect(t, lerp(0, 1, -1.2) == 0)
 }

@@ -31,6 +31,8 @@ main :: proc() {
 	scene := new_scene(models[:])
 	text_byte_arr := scene_to_pixels(scene)
 
+	rl.SetTargetFPS(60)
+
 	src := rl.Rectangle{0, 0, f32(texture.width), f32(texture.height)}
 	dst := rl.Rectangle{0, 0, f32(rl.GetScreenWidth()), f32(rl.GetScreenHeight())}
 	origin := rl.Vector2{0, 0}
