@@ -27,8 +27,11 @@ main :: proc() {
 	texture := rl.LoadTextureFromImage(rl.GenImageColor(W, H, rl.BLACK))
 	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
 
+	vertices, ok := load_obj_file()
+	fmt.println(ok, vertices)
+
 	// TODO: make bounding optimization + refactor of model creation
-	models := gen_triangles(15)
+	models := gen_triangles(10)
 	scene := new_scene(&models)
 	text_byte_arr := scene_to_pixels(scene)
 
@@ -59,10 +62,11 @@ Scene :: struct {
 	colors: [W * H]Vec3,
 }
 
-new_scene :: proc(models: ^[15]Model) -> Scene {
+new_scene :: proc(models: ^[10]Model) -> Scene {
 	colors := [W * H]Vec3{}
 	black: Vec3 = {0, 0, 0}
 
+	// - Bound triangle check can be applied but not necessary here
 	for i := 0; i < W * H; i += 1 {
 		x := i % W
 		y := i / W
