@@ -7,12 +7,20 @@ import "core:fmt"
 import "core:math/linalg"
 import "core:math/rand"
 import "core:os"
+import "core:time"
 
 import rl "vendor:raylib"
 
 Color :: distinct [4]u8
 Triangle :: struct {
 	a, b, c: Vec2,
+}
+Model :: struct {
+	triangle: Triangle,
+	color:    Vec3,
+}
+Scene :: struct {
+	colors: [W * H]Vec3,
 }
 
 // W, H :: 8, 8
@@ -53,15 +61,6 @@ main :: proc() {
 	rl.CloseWindow()
 }
 
-Model :: struct {
-	triangle: Triangle,
-	color:    Vec3,
-}
-
-Scene :: struct {
-	colors: [W * H]Vec3,
-}
-
 new_scene :: proc(models: ^[10]Model) -> Scene {
 	colors := [W * H]Vec3{}
 	black: Vec3 = {0, 0, 0}
@@ -71,11 +70,12 @@ new_scene :: proc(models: ^[10]Model) -> Scene {
 		x := i % W
 		y := i / W
 
-		for &model in models {
+		#reverse for &model in models {
 			using model
 
 			if point_in_triangle(triangle, Vec2{f32(x), f32(y)}) {
 				colors[i] = color
+				continue
 			}
 		}
 	}

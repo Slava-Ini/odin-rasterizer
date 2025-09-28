@@ -25,11 +25,11 @@ write_to_file :: proc(image: [W][H]Vec3) {
 	}
 }
 
-load_obj_file :: proc() -> (vertices: [dynamic]Vec3, ok: bool) {
+load_obj_file :: proc() -> (triangles: [dynamic]Triangle, ok: bool) {
 	f, err := os.open("cube.obj", os.O_RDONLY)
 	if err != nil {
 		fmt.println("ERROR: ", err)
-		return vertices, false
+		return triangles, false
 	}
 	defer os.close(f)
 
@@ -44,18 +44,27 @@ load_obj_file :: proc() -> (vertices: [dynamic]Vec3, ok: bool) {
 			continue
 		}
 
-		for s in strings.split(line, " ") {
+		for s, i in strings.split(line, " ") {
 			if s == "f" {
 				continue
 			}
 
+			// Process fan triangles
+			// Need to think here because of triangles being x,y , but model vec3
+			// if (i >= 3) {
+			// } else {
+				
+			// }
+
 			elements := strings.split(s, "/")
 			vec: Vec3
-			for v, i in elements {
+			for v, j in elements {
 				n := strconv.parse_f32(v) or_return
-				vec[i] = n
+				vec[j] = n
 			}
-			append(&vertices, vec)
+
+			// TODO: mind adding 1 for correct coordinates interpolation?
+			append(&triangles, Triangle{a = vec[0], b = vec[1], c = vec[2]})
 		}
 	}
 
