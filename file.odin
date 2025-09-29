@@ -25,6 +25,7 @@ write_to_file :: proc(image: [W][H]Vec3) {
 	}
 }
 
+// TODO: split the logic of the procedure
 load_obj_file :: proc(path: string) -> (vertices: [dynamic]Vec3, ok: bool = true) {
 	f, err := os.open(path, os.O_RDONLY)
 	if err != nil {
@@ -66,8 +67,22 @@ load_obj_file :: proc(path: string) -> (vertices: [dynamic]Vec3, ok: bool = true
 				if (i >= 3) {
 					// fmt.println("A_3_1: ", vertex_buf[0])
 					// fmt.println("A_3_2: ", vertex_buf[len(vertex_buf) - 2])
-					append(&vertices, vertex_buf[0]) // might be wrong?
-					append(&vertices, vertex_buf[len(vertex_buf) - 2])
+					// - Note: jumps to the first point of the "fan"
+					fmt.println(
+						" LEN: ",
+						len(vertices),
+						" NUMBER: ",
+						(3 * i - 6),
+						" RES: ",
+						len(vertices) - (3 * i - 6),
+					)
+					// - Note: always jumps to first face element no matter the amount of triangles
+					//   It's `3i - 6` instead of `3i - 3` because at the moment of operation 3 new vertices
+					//   hasn't beend added to `vertices` yet, so we subtract 2x3 to not undershoot index to become negative
+					append(&vertices, vertices[len(vertices) - (3 * i - 6)])
+					// - Note: jumps to the last point of a previous triangle
+					//        (taking into account that another point was added)
+					append(&vertices, vertices[len(vertices) - 2])
 				}
 
 				// fmt.println("A_N: ", vertex_buf[vertex_index])

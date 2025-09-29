@@ -31,6 +31,10 @@ W, H :: 64, 64
 // W, H :: 128, 128
 // W, H :: 256, 256
 
+// Potential bugs:
+// - Check if the grid is built correctly (no overflow) - suspicious that the triangle is not drawn when
+//   disabling `vertex_to_screen` 
+
 main :: proc() {
 	rl.InitWindow(1_000, 1_000, "Odin Rasterizer")
 	texture := rl.LoadTextureFromImage(rl.GenImageColor(W, H, rl.BLACK))
@@ -40,8 +44,9 @@ main :: proc() {
 	fmt.println(ok, vertices)
 
 	// TODO: make bounding optimization + refactor of model creation
-	models := gen_triangles(10)
-	scene := new_scene(&models)
+	// models := gen_triangles(10)
+	// scene := new_scene(&models)
+	scene := new_scene(vertices)
 	text_byte_arr := scene_to_pixels(scene)
 
 	rl.SetTargetFPS(60)
@@ -62,9 +67,8 @@ main :: proc() {
 	rl.CloseWindow()
 }
 
-new_scene :: proc(models: ^[10]Model) -> Scene {
+new_scene_mod :: proc(models: ^[10]Model) -> Scene {
 	colors := [W * H]Vec3{}
-	black: Vec3 = {0, 0, 0}
 
 	// - Bound triangle check can be applied but not necessary here
 	for i := 0; i < W * H; i += 1 {
@@ -82,6 +86,60 @@ new_scene :: proc(models: ^[10]Model) -> Scene {
 	}
 
 	return Scene{colors}
+}
+
+// TODO: optimize (currently it's a mess)
+new_scene_vert :: proc(vertices: [dynamic]Vec3) -> Scene {
+	colors := [W * H]Vec3{}
+	triangles := [dynamic]Triangle{}
+	tri_colors := [dynamic]Vec3{}
+
+	for j := 0; j < len(vertices); j += 3 {
+		size := Vec2{W, H}
+		a := vertex_to_screen(vertices[j], size)
+		b := vertex_to_screen(vertices[j + 1], size)
+		c := vertex_to_screen(vertices[j + 2], size)
+
+		tri := Triangle {
+			a = a.xy,
+			b = b.xy,
+			c = c.xy,
+		}
+
+		append(&triangles, tri)
+		append(&tri_colors, Vec3{rand.float32(), rand.float32(), rand.float32()})
+	}
+
+	// - Bound triangle check must be applied!
+	for i := 0; i < W * H; i += 1 {
+		x := i % W
+		y := i / W
+
+		#reverse for &tri, index in triangles {
+			using tri
+
+			if point_in_triangle(tri, Vec2{f32(x), f32(y)}) {
+				colors[i] = tri_colors[index]
+				continue
+			}
+		}
+	}
+
+	return Scene{colors}
+}
+
+new_scene :: proc {
+	new_scene_mod,
+	new_scene_vert,
+}
+
+// TODO: research in details
+vertex_to_screen :: proc(vertex: Vec3, num_pixels: Vec2) -> Vec2 {
+	screen_height_world := 5
+	pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world)
+
+	pixel_offset := Vec2{0 = vertex.x, 1 = vertex.y} * pixels_per_world_unit
+	return num_pixels / 2 + pixel_offset
 }
 
 scene_to_pixels :: proc(using scene: Scene) -> (tb_arr: [W * H * 4]byte) {
