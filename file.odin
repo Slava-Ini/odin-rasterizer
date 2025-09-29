@@ -25,21 +25,21 @@ write_to_file :: proc(image: [W][H]Vec3) {
 	}
 }
 
-load_obj_file :: proc() -> (triangles: [dynamic]Triangle, ok: bool) {
-	f, err := os.open("cube.obj", os.O_RDONLY)
+load_obj_file :: proc(path: string) -> (vertices: [dynamic]Vec3, ok: bool = true) {
+	f, err := os.open(path, os.O_RDONLY)
 	if err != nil {
 		fmt.println("ERROR: ", err)
-		return triangles, false
+		return vertices, false
 	}
 	defer os.close(f)
-
 
 	data := os.read_entire_file(f) or_return
 	defer delete(data)
 
 	it := string(data)
 
-	vertex_buf: []Vec3
+	// -- Vertex buffer is a buffer of all `vt` model points
+	vertex_buf := [dynamic]Vec3{}
 
 	for line in strings.split_lines_iterator(&it) {
 		// - Reading vertices
@@ -49,7 +49,8 @@ load_obj_file :: proc() -> (triangles: [dynamic]Triangle, ok: bool) {
 				n := strconv.parse_f32(v) or_else 0
 				vertex[i] = n
 			}
-			vertex_buf[len(vertex_buf) - 1] = vertex
+
+			append(&vertex_buf, vertex)
 		}
 
 		// - Reading faces
@@ -57,21 +58,26 @@ load_obj_file :: proc() -> (triangles: [dynamic]Triangle, ok: bool) {
 			for s, i in strings.split(line[2:], " ") {
 				indices := strings.split(s, "/")
 
-				// TODO: need better error handling here
 				// - `- 1` because `.obj` indices start from 1
-				vertex_index := strconv.parse_f32(indices[0]) or_else 1 - 1
+				vertex_index, ok := strconv.parse_int(indices[0])
+				vertex_index = ok ? vertex_index - 1 : 0
 
+				// -- Ear clipping algorithm is needed for concavity
 				if (i >= 3) {
-					// TODO: start here
-					// - For now maybe continue using triangles, but needs to be changed later
-				} 
+					// fmt.println("A_3_1: ", vertex_buf[0])
+					// fmt.println("A_3_2: ", vertex_buf[len(vertex_buf) - 2])
+					append(&vertices, vertex_buf[0]) // might be wrong?
+					append(&vertices, vertex_buf[len(vertex_buf) - 2])
+				}
 
-				// TODO: mind adding 1 for correct coordinates interpolation?
-				append(&triangles, Triangle{a = vec[0], b = vec[1], c = vec[2]})
+				// fmt.println("A_N: ", vertex_buf[vertex_index])
+				append(&vertices, vertex_buf[vertex_index])
 			}
 		}
 	}
 
+	// -- Note --
+	// Each 3 points of a result `vertices` is a triangle
 	return
 }
 

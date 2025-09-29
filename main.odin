@@ -36,7 +36,7 @@ main :: proc() {
 	texture := rl.LoadTextureFromImage(rl.GenImageColor(W, H, rl.BLACK))
 	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
 
-	vertices, ok := load_obj_file()
+	vertices, ok := load_obj_file("cube.obj")
 	fmt.println(ok, vertices)
 
 	// TODO: make bounding optimization + refactor of model creation
