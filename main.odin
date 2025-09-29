@@ -12,6 +12,7 @@ import "core:time"
 import rl "vendor:raylib"
 
 Color :: distinct [4]u8
+// TODO: to remove all triangles in favor of Vec3
 Triangle :: struct {
 	a, b, c: Vec2,
 }

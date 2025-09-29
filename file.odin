@@ -39,32 +39,36 @@ load_obj_file :: proc() -> (triangles: [dynamic]Triangle, ok: bool) {
 
 	it := string(data)
 
+	vertex_buf: []Vec3
+
 	for line in strings.split_lines_iterator(&it) {
-		if !strings.starts_with(line, "f") {
-			continue
+		// - Reading vertices
+		if strings.starts_with(line, "v ") {
+			vertex := Vec3{}
+			for v, i in strings.split(line[2:], " ") {
+				n := strconv.parse_f32(v) or_else 0
+				vertex[i] = n
+			}
+			vertex_buf[len(vertex_buf) - 1] = vertex
 		}
 
-		for s, i in strings.split(line, " ") {
-			if s == "f" {
-				continue
+		// - Reading faces
+		if strings.starts_with(line, "f ") {
+			for s, i in strings.split(line[2:], " ") {
+				indices := strings.split(s, "/")
+
+				// TODO: need better error handling here
+				// - `- 1` because `.obj` indices start from 1
+				vertex_index := strconv.parse_f32(indices[0]) or_else 1 - 1
+
+				if (i >= 3) {
+					// TODO: start here
+					// - For now maybe continue using triangles, but needs to be changed later
+				} 
+
+				// TODO: mind adding 1 for correct coordinates interpolation?
+				append(&triangles, Triangle{a = vec[0], b = vec[1], c = vec[2]})
 			}
-
-			// Process fan triangles
-			// Need to think here because of triangles being x,y , but model vec3
-			// if (i >= 3) {
-			// } else {
-				
-			// }
-
-			elements := strings.split(s, "/")
-			vec: Vec3
-			for v, j in elements {
-				n := strconv.parse_f32(v) or_return
-				vec[j] = n
-			}
-
-			// TODO: mind adding 1 for correct coordinates interpolation?
-			append(&triangles, Triangle{a = vec[0], b = vec[1], c = vec[2]})
 		}
 	}
 

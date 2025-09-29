@@ -1,4 +1,7 @@
+# - Object name
 o Cube
+
+# - These are vertices of the model with `x y z` pattern 
 v 0.947920 0.947920 -0.947920
 v 0.947920 -0.947920 -0.947920
 v 0.947920 0.947920 0.947920
@@ -7,12 +10,25 @@ v -0.947920 0.947920 -0.947920
 v -0.947920 -0.947920 -0.947920
 v -0.947920 0.947920 0.947920
 v -0.947920 -0.947920 0.947920
+
+
+# - These are vector normals i.e. just vectors pointing in different directions
+#   They are used to calculate lightning, shading, reflactions etc. (x y z)
+# 0 0 1  = points straight forward in +Z
+# 0 0 -1 = points backward in -Z
+# 0 1 0  = points upward in +Y
 vn -0.0000 1.0000 -0.0000
 vn -0.0000 -0.0000 1.0000
 vn -1.0000 -0.0000 -0.0000
 vn -0.0000 -1.0000 -0.0000
 vn 1.0000 -0.0000 -0.0000
 vn -0.0000 -0.0000 -1.0000
+
+# - These are texture coordinates they point to coordinates of texture in the following way:
+# 0 0 = bottom-left corner
+# 1 0 = bottom-right corner
+# 1 1 = top-right corner
+# 0 1 = top-left corner
 vt 0.625000 0.500000
 vt 0.875000 0.500000
 vt 0.875000 0.750000
@@ -27,7 +43,12 @@ vt 0.375000 0.250000
 vt 0.125000 0.500000
 vt 0.375000 0.500000
 vt 0.125000 0.750000
+
+# - Smoothing group
 s 0
+
+# - Extended face data `f vertexIndex / texCoordIndex / normalIndex`
+#   It's saying what index of v/vt/vn to take (index starts with 1)
 f 1/1/1 5/2/1 7/3/1 3/4/1
 f 4/5/2 3/4/2 7/6/2 8/7/2
 f 8/8/3 7/9/3 5/10/3 6/11/3
