@@ -133,12 +133,13 @@ new_scene :: proc {
 	new_scene_vert,
 }
 
-// TODO: research in details
 vertex_to_screen :: proc(vertex: Vec3, num_pixels: Vec2) -> Vec2 {
+	// - Screen heights in world units (i.e. from top to bottom)
 	screen_height_world := 5
 	pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world)
 
-	pixel_offset := Vec2{0 = vertex.x, 1 = vertex.y} * pixels_per_world_unit
+	// - Offset from the center of the screen, which is taken for (0, 0)
+	pixel_offset := vertex.xy * pixels_per_world_unit
 	return num_pixels / 2 + pixel_offset
 }
 
