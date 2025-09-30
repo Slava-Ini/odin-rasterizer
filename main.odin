@@ -35,8 +35,8 @@ State :: struct {
 // W, H :: 8, 8
 // W, H :: 16, 16
 // W, H :: 32, 32
-// W, H :: 64, 64
-W, H :: 128, 128
+W, H :: 64, 64
+// W, H :: 128, 128
 // W, H :: 256, 256
 
 // Potential bugs:
@@ -74,32 +74,7 @@ main :: proc() {
 		scene := new_scene(vertices, state.transform, tri_colors)
 		text_byte_arr := scene_to_pixels(scene)
 
-		// TODO: improve it somehow?
-		// -- Input
-		if rl.IsKeyDown(.LEFT) {
-			state.transform = Transform {
-				yaw   = state.transform.yaw + f32(0.05),
-				pitch = state.transform.pitch,
-			}
-		}
-		if rl.IsKeyDown(.RIGHT) {
-			state.transform = Transform {
-				yaw   = state.transform.yaw - f32(0.05),
-				pitch = state.transform.pitch,
-			}
-		}
-		if rl.IsKeyDown(.UP) {
-			state.transform = Transform {
-				pitch = state.transform.pitch + f32(0.05),
-				yaw   = state.transform.yaw,
-			}
-		}
-		if rl.IsKeyDown(.DOWN) {
-			state.transform = Transform {
-				pitch = state.transform.pitch - f32(0.05),
-				yaw   = state.transform.yaw,
-			}
-		}
+		handle_input(&state)
 
 		rl.UpdateTexture(texture, &text_byte_arr)
 		rl.BeginDrawing()
