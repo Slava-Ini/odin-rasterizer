@@ -8,11 +8,12 @@ Vec3 :: [3]f32
 point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
 	// -- Method 1: Ray Casting
 	//    Cast a ray in random direction to count how many times the ray intersects the triangle
+	//    Note: Doesn't work for 3D
 	// return ray_casting(tri, p)
 
 	// -- Method 2: Edge function using dot product
 	//    Find on which side of every edge the point is using dot product and rotation
-	// return edge_function_dot_product(tri, p)
+	return edge_function_dot_product(tri, p)
 
 	// -- Method 3: Edge function using cross product
 	//    Find on which side of every edge the point is using cross product
@@ -20,7 +21,7 @@ point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
 
 	// -- Method 4: Barycentric Coordinates
 	//    Find barycentric weights to determine wheather the point is in triangle
-	return barycentric(tri, p)
+	// return barycentric(tri, p)
 }
 
 // Note: rotating clockwise
@@ -67,11 +68,13 @@ edge_function_dot_product :: proc(tri: Triangle, p: Vec2) -> bool {
 		ab := Vec2{x2 - x1, y2 - y1}
 		perpendicular(&ab)
 
-		// Note: here we can change `<` to `>=` but then the `return` check will change as well
+		// Note: here we can change `<=` to `>=` but then the `return` check will change as well
 		//       It depends on how to rotate the triangle in order to get how we are checking
-		res[i] = dot(ap, ab) < 0
+		res[i] = dot(ap, ab) <= 0
 	}
 
+	// Note: this one will result in no back face culling
+	// return res[0] == res[1] && res[2] == res[1]
 	return res[0] && res[1] && res[2]
 }
 

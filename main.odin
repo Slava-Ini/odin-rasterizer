@@ -4,7 +4,7 @@ package rasterizer
 
 import "core:crypto"
 import "core:fmt"
-import "core:math/linalg"
+import math "core:math/linalg"
 import "core:math/rand"
 import "core:os"
 import "core:time"
@@ -23,17 +23,29 @@ Model :: struct {
 Scene :: struct {
 	colors: [W * H]Vec3,
 }
+Transform :: struct {
+	yaw:   f32,
+	pitch: f32,
+}
+State :: struct {
+	transform: Transform,
+}
+
 
 // W, H :: 8, 8
 // W, H :: 16, 16
 // W, H :: 32, 32
-W, H :: 64, 64
-// W, H :: 128, 128
+// W, H :: 64, 64
+W, H :: 128, 128
 // W, H :: 256, 256
 
 // Potential bugs:
 // - Check if the grid is built correctly (no overflow) - suspicious that the triangle is not drawn when
 //   disabling `vertex_to_screen` 
+
+state := State {
+	transform = Transform{},
+}
 
 main :: proc() {
 	rl.InitWindow(1_000, 1_000, "Odin Rasterizer")
@@ -41,13 +53,6 @@ main :: proc() {
 	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
 
 	vertices, ok := load_obj_file("cube.obj")
-	fmt.println(ok, vertices)
-
-	// TODO: make bounding optimization + refactor of model creation
-	// models := gen_triangles(10)
-	// scene := new_scene(&models)
-	scene := new_scene(vertices)
-	text_byte_arr := scene_to_pixels(scene)
 
 	rl.SetTargetFPS(60)
 
@@ -55,7 +60,47 @@ main :: proc() {
 	dst := rl.Rectangle{0, 0, f32(rl.GetScreenWidth()), f32(rl.GetScreenHeight())}
 	origin := rl.Vector2{0, 0}
 
+	pink := Vec3{1, 0.2, 1}
+	red := Vec3{1, 0.2, 0}
+	purple := Vec3{0.5, 0, 0.5}
+	dark_green := Vec3{0, 0.5, 0}
+	dark_blue := Vec3{0, 0, 0.5}
+	blue := Vec3{0, 0.2, 1}
+
+	tri_colors := [6]Vec3{pink, purple, red, dark_green, dark_blue, blue}
+
 	for !rl.WindowShouldClose() {
+		// TODO: make bounding optimization + refactor of model creation
+		scene := new_scene(vertices, state.transform, tri_colors)
+		text_byte_arr := scene_to_pixels(scene)
+
+		// TODO: improve it somehow?
+		// -- Input
+		if rl.IsKeyDown(.LEFT) {
+			state.transform = Transform {
+				yaw   = state.transform.yaw + f32(0.05),
+				pitch = state.transform.pitch,
+			}
+		}
+		if rl.IsKeyDown(.RIGHT) {
+			state.transform = Transform {
+				yaw   = state.transform.yaw - f32(0.05),
+				pitch = state.transform.pitch,
+			}
+		}
+		if rl.IsKeyDown(.UP) {
+			state.transform = Transform {
+				pitch = state.transform.pitch + f32(0.05),
+				yaw   = state.transform.yaw,
+			}
+		}
+		if rl.IsKeyDown(.DOWN) {
+			state.transform = Transform {
+				pitch = state.transform.pitch - f32(0.05),
+				yaw   = state.transform.yaw,
+			}
+		}
+
 		rl.UpdateTexture(texture, &text_byte_arr)
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
@@ -89,16 +134,18 @@ new_scene_mod :: proc(models: ^[10]Model) -> Scene {
 }
 
 // TODO: optimize (currently it's a mess)
-new_scene_vert :: proc(vertices: [dynamic]Vec3) -> Scene {
+new_scene_vert :: proc(
+	vertices: [dynamic]Vec3,
+	transform: Transform,
+	tri_colors: [6]Vec3,
+) -> Scene {
 	colors := [W * H]Vec3{}
 	triangles := [dynamic]Triangle{}
-	tri_colors := [dynamic]Vec3{}
 
 	for j := 0; j < len(vertices); j += 3 {
-		size := Vec2{W, H}
-		a := vertex_to_screen(vertices[j], size)
-		b := vertex_to_screen(vertices[j + 1], size)
-		c := vertex_to_screen(vertices[j + 2], size)
+		a := vertex_to_screen(vertices[j], transform)
+		b := vertex_to_screen(vertices[j + 1], transform)
+		c := vertex_to_screen(vertices[j + 2], transform)
 
 		tri := Triangle {
 			a = a.xy,
@@ -107,7 +154,6 @@ new_scene_vert :: proc(vertices: [dynamic]Vec3) -> Scene {
 		}
 
 		append(&triangles, tri)
-		append(&tri_colors, Vec3{rand.float32(), rand.float32(), rand.float32()})
 	}
 
 	// - Bound triangle check must be applied!
@@ -119,7 +165,8 @@ new_scene_vert :: proc(vertices: [dynamic]Vec3) -> Scene {
 			using tri
 
 			if point_in_triangle(tri, Vec2{f32(x), f32(y)}) {
-				colors[i] = tri_colors[index]
+				color_index := index % len(tri_colors)
+				colors[i] = tri_colors[color_index]
 				continue
 			}
 		}
@@ -133,14 +180,43 @@ new_scene :: proc {
 	new_scene_vert,
 }
 
-vertex_to_screen :: proc(vertex: Vec3, num_pixels: Vec2) -> Vec2 {
+vertex_to_screen :: proc(vertex: Vec3, transform: Transform) -> Vec2 {
+	num_pixels := Vec2{W, H}
+
+	// - Addition of `point_to_world`
+	vertex_world := point_to_world(vertex, transform)
+
 	// - Screen heights in world units (i.e. from top to bottom)
 	screen_height_world := 5
 	pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world)
 
 	// - Offset from the center of the screen, which is taken for (0, 0)
-	pixel_offset := vertex.xy * pixels_per_world_unit
+	pixel_offset := vertex_world.xy * pixels_per_world_unit
 	return num_pixels / 2 + pixel_offset
+}
+
+// TODO: figure out in details!!!
+point_to_world :: proc(point: Vec3, using transform: Transform) -> Vec3 {
+	using math
+
+	// TODO: rework to just matrix multiplications
+	i_hat_yaw := Vec3{cos(yaw), 0, sin(yaw)}
+	j_hat_yaw := Vec3{0, 1, 0}
+	k_hat_yaw := Vec3{-sin(yaw), 0, cos(yaw)}
+
+	i_hat_pitch := Vec3{1, 0, 0}
+	j_hat_pitch := Vec3{0, cos(pitch), -sin(pitch)}
+	k_hat_pitch := Vec3{0, sin(pitch), cos(pitch)}
+
+	i_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, i_hat_pitch)
+	j_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, j_hat_pitch)
+	k_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, k_hat_pitch)
+
+	return transform_vec(i_hat, j_hat, k_hat, point)
+}
+
+transform_vec :: proc(i_hat, j_hat, k_hat, v: Vec3) -> Vec3 {
+	return v.x * i_hat + v.y * j_hat + v.z * k_hat
 }
 
 scene_to_pixels :: proc(using scene: Scene) -> (tb_arr: [W * H * 4]byte) {
