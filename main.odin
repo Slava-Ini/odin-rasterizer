@@ -29,6 +29,7 @@ Transform :: struct {
 }
 State :: struct {
 	transform: Transform,
+	position:  Vec3,
 }
 
 
@@ -45,6 +46,7 @@ W, H :: 64, 64
 
 state := State {
 	transform = Transform{},
+	position  = Vec3{0, 0, -2},
 }
 
 main :: proc() {
@@ -71,7 +73,7 @@ main :: proc() {
 
 	for !rl.WindowShouldClose() {
 		// TODO: make bounding optimization + refactor of model creation
-		scene := new_scene(vertices, state.transform, tri_colors)
+		scene := new_scene(vertices, state.transform, tri_colors, state.position)
 		text_byte_arr := scene_to_pixels(scene)
 
 		handle_input(&state)
@@ -113,14 +115,15 @@ new_scene_vert :: proc(
 	vertices: [dynamic]Vec3,
 	transform: Transform,
 	tri_colors: [6]Vec3,
+	position: Vec3,
 ) -> Scene {
 	colors := [W * H]Vec3{}
 	triangles := [dynamic]Triangle{}
 
 	for j := 0; j < len(vertices); j += 3 {
-		a := vertex_to_screen(vertices[j], transform)
-		b := vertex_to_screen(vertices[j + 1], transform)
-		c := vertex_to_screen(vertices[j + 2], transform)
+		a := vertex_to_screen(vertices[j], transform, position)
+		b := vertex_to_screen(vertices[j + 1], transform, position)
+		c := vertex_to_screen(vertices[j + 2], transform, position)
 
 		tri := Triangle {
 			a = a.xy,
@@ -155,15 +158,16 @@ new_scene :: proc {
 	new_scene_vert,
 }
 
-vertex_to_screen :: proc(vertex: Vec3, transform: Transform) -> Vec2 {
+vertex_to_screen :: proc(vertex: Vec3, transform: Transform, position: Vec3) -> Vec2 {
 	num_pixels := Vec2{W, H}
 
 	// - Addition of `point_to_world`
-	vertex_world := point_to_world(vertex, transform)
+	vertex_world := point_to_world(vertex, transform, position)
 
 	// - Screen heights in world units (i.e. from top to bottom)
 	screen_height_world := 5
-	pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world)
+	// - Here `z` represents z axis 
+	pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world) / vertex_world.z
 
 	// - Offset from the center of the screen, which is taken for (0, 0)
 	pixel_offset := vertex_world.xy * pixels_per_world_unit
@@ -171,23 +175,36 @@ vertex_to_screen :: proc(vertex: Vec3, transform: Transform) -> Vec2 {
 }
 
 // TODO: figure out in details!!!
-point_to_world :: proc(point: Vec3, using transform: Transform) -> Vec3 {
+point_to_world :: proc(point: Vec3, using transform: Transform, position: Vec3) -> Vec3 {
 	using math
 
 	// TODO: rework to just matrix multiplications
-	i_hat_yaw := Vec3{cos(yaw), 0, sin(yaw)}
-	j_hat_yaw := Vec3{0, 1, 0}
-	k_hat_yaw := Vec3{-sin(yaw), 0, cos(yaw)}
+	// i_hat_yaw := Vec3{cos(yaw), 0, sin(yaw)}
+	// j_hat_yaw := Vec3{0, 1, 0}
+	// k_hat_yaw := Vec3{-sin(yaw), 0, cos(yaw)}
 
-	i_hat_pitch := Vec3{1, 0, 0}
-	j_hat_pitch := Vec3{0, cos(pitch), -sin(pitch)}
-	k_hat_pitch := Vec3{0, sin(pitch), cos(pitch)}
+	m_yaw := matrix[3, 3]f32{
+		cos(yaw), 0, -sin(yaw),
+		0, 1, 0,
+		sin(yaw), 0, cos(yaw),
+	}
 
-	i_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, i_hat_pitch)
-	j_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, j_hat_pitch)
-	k_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, k_hat_pitch)
+	// i_hat_pitch := Vec3{1, 0, 0}
+	// j_hat_pitch := Vec3{0, cos(pitch), -sin(pitch)}
+	// k_hat_pitch := Vec3{0, sin(pitch), cos(pitch)}
 
-	return transform_vec(i_hat, j_hat, k_hat, point)
+	m_pitch := matrix[3, 3]f32{
+		1, 0, 0,
+		0, cos(pitch), sin(pitch),
+		0, -sin(pitch), cos(pitch),
+	}
+
+	// i_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, i_hat_pitch)
+	// j_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, j_hat_pitch)
+	// k_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, k_hat_pitch)
+
+	// return transform_vec(i_hat, j_hat, k_hat, point)
+	return m_pitch * (m_yaw * point) + position
 }
 
 transform_vec :: proc(i_hat, j_hat, k_hat, v: Vec3) -> Vec3 {
