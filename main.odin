@@ -11,6 +11,12 @@ import "core:time"
 
 import rl "vendor:raylib"
 
+// TODO:
+// When working with transformation research
+// - Euler Angle xyz -> Gimbal lock
+// - Quaternion wxyz
+// - Axis Angle wxyz
+
 Color :: distinct [4]u8
 // TODO: to remove all triangles in favor of Vec3
 Triangle :: struct {
@@ -36,8 +42,8 @@ State :: struct {
 // W, H :: 8, 8
 // W, H :: 16, 16
 // W, H :: 32, 32
-W, H :: 64, 64
-// W, H :: 128, 128
+// W, H :: 64, 64
+W, H :: 128, 128
 // W, H :: 256, 256
 
 // Potential bugs:
@@ -52,7 +58,7 @@ state := State {
 main :: proc() {
 	rl.InitWindow(1_000, 1_000, "Odin Rasterizer")
 	texture := rl.LoadTextureFromImage(rl.GenImageColor(W, H, rl.BLACK))
-	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
+	rl.SetTextureFilter(texture, rl.TextureFilter.POINT)
 
 	vertices, ok := load_obj_file("cube.obj")
 
@@ -175,6 +181,10 @@ vertex_to_screen :: proc(vertex: Vec3, transform: Transform, position: Vec3) -> 
 }
 
 // TODO: figure out in details!!!
+// Research:
+// - World Space
+// - Object Space
+// - Local Space
 point_to_world :: proc(point: Vec3, using transform: Transform, position: Vec3) -> Vec3 {
 	using math
 
@@ -203,7 +213,7 @@ point_to_world :: proc(point: Vec3, using transform: Transform, position: Vec3) 
 	// j_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, j_hat_pitch)
 	// k_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, k_hat_pitch)
 
-	// return transform_vec(i_hat, j_hat, k_hat, point)
+	// return transform_vec(i_hat, j_hat, k_hat, point) + position
 	return m_pitch * (m_yaw * point) + position
 }
 
