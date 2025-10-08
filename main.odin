@@ -7,6 +7,7 @@ import "core:fmt"
 import math "core:math/linalg"
 import "core:math/rand"
 import "core:os"
+import "core:strings"
 import "core:time"
 
 import rl "vendor:raylib"
@@ -32,6 +33,7 @@ Scene :: struct {
 Transform :: struct {
 	yaw:   f32,
 	pitch: f32,
+	roll:  f32,
 }
 State :: struct {
 	transform: Transform,
@@ -42,8 +44,8 @@ State :: struct {
 // W, H :: 8, 8
 // W, H :: 16, 16
 // W, H :: 32, 32
-// W, H :: 64, 64
-W, H :: 128, 128
+W, H :: 64, 64
+// W, H :: 128, 128
 // W, H :: 256, 256
 
 // Potential bugs:
@@ -87,9 +89,12 @@ main :: proc() {
 		rl.UpdateTexture(texture, &text_byte_arr)
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.BLACK)
-		// rl.DrawTexture(texture, 0, 0, rl.WHITE)
+		rl.DrawTexture(texture, 0, 0, rl.WHITE)
 		rl.DrawTexturePro(texture, src, dst, origin, 0, rl.WHITE)
-		rl.DrawFPS(10, 10)
+
+		print_state(&state)
+		print_fps()
+
 		rl.EndDrawing()
 	}
 	rl.CloseWindow()
@@ -173,7 +178,8 @@ vertex_to_screen :: proc(vertex: Vec3, transform: Transform, position: Vec3) -> 
 	// - Screen heights in world units (i.e. from top to bottom)
 	screen_height_world := 5
 	// - Here `z` represents z axis 
-	pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world) / vertex_world.z
+	// pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world) / vertex_world.z
+	pixels_per_world_unit := f32(num_pixels.y) / f32(screen_height_world)
 
 	// - Offset from the center of the screen, which is taken for (0, 0)
 	pixel_offset := vertex_world.xy * pixels_per_world_unit
@@ -194,9 +200,9 @@ point_to_world :: proc(point: Vec3, using transform: Transform, position: Vec3) 
 	// k_hat_yaw := Vec3{-sin(yaw), 0, cos(yaw)}
 
 	m_yaw := matrix[3, 3]f32{
-		cos(yaw), 0, -sin(yaw),
+		cos(yaw), 0, sin(yaw),
 		0, 1, 0,
-		sin(yaw), 0, cos(yaw),
+		-sin(yaw), 0, cos(yaw),
 	}
 
 	// i_hat_pitch := Vec3{1, 0, 0}
@@ -205,16 +211,22 @@ point_to_world :: proc(point: Vec3, using transform: Transform, position: Vec3) 
 
 	m_pitch := matrix[3, 3]f32{
 		1, 0, 0,
-		0, cos(pitch), sin(pitch),
-		0, -sin(pitch), cos(pitch),
+		0, cos(pitch), -sin(pitch),
+		0, sin(pitch), cos(pitch),
 	}
 
 	// i_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, i_hat_pitch)
 	// j_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, j_hat_pitch)
 	// k_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, k_hat_pitch)
 
+	m_roll := matrix[3, 3]f32{
+		cos(roll), -sin(roll), 0,
+		sin(roll), cos(roll), 0,
+		0, 0, 1,
+	}
+
 	// return transform_vec(i_hat, j_hat, k_hat, point) + position
-	return m_pitch * (m_yaw * point) + position
+	return m_roll * m_pitch * (m_yaw * point) + position
 }
 
 transform_vec :: proc(i_hat, j_hat, k_hat, v: Vec3) -> Vec3 {
