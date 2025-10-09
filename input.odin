@@ -1,12 +1,9 @@
 package rasterizer
 
-import math "core:math/linalg"
 import rl "vendor:raylib"
-
 
 TRANSFORM_SPEED: f32 : 0.05
 MOVE_SPEED: f32 : 0.03
-
 
 handle_input :: proc(state: ^State) {
 	update_transform(state)
@@ -14,29 +11,23 @@ handle_input :: proc(state: ^State) {
 }
 
 update_transform :: proc(using state: ^State) {
-	limit_to_pi :: proc(value: f32) -> f32 {
-		// TODO: finalize the bounds and think about it more! 
-		result := f32(math.mod(value + math.PI, math.TAU)) // TAU = 2 * PI
-		return result - math.PI
-	}
-
 	if rl.IsKeyDown(.LEFT) {
-		transform.yaw = limit_to_pi(TRANSFORM_SPEED + transform.yaw)
+		transform.yaw = limit_to_pi(transform.yaw + TRANSFORM_SPEED)
 	}
 	if rl.IsKeyDown(.RIGHT) {
-		transform.yaw -= TRANSFORM_SPEED
+		transform.yaw = limit_to_pi(transform.yaw - TRANSFORM_SPEED)
 	}
 	if rl.IsKeyDown(.UP) {
-		transform.pitch += TRANSFORM_SPEED
+		transform.pitch = limit_to_pi(transform.pitch + TRANSFORM_SPEED)
 	}
 	if rl.IsKeyDown(.DOWN) {
-		transform.pitch -= TRANSFORM_SPEED
+		transform.pitch = limit_to_pi(transform.pitch - TRANSFORM_SPEED)
 	}
 	if rl.IsKeyDown(.Q) {
-		transform.roll += TRANSFORM_SPEED
+		transform.roll = limit_to_pi(transform.roll + TRANSFORM_SPEED)
 	}
 	if rl.IsKeyDown(.E) {
-		transform.roll -= TRANSFORM_SPEED
+		transform.roll = limit_to_pi(transform.roll - TRANSFORM_SPEED)
 	}
 }
 

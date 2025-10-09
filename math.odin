@@ -118,6 +118,12 @@ clamp :: proc(v, min, max: f32) -> f32 {
 	return math.max(min, math.min(max, v))
 }
 
+limit_to_pi :: proc(value: f32) -> f32 {
+	// Here we limit the value to rotate from `0 to PI` and then switch to going from `-PI to 0`
+	result := f32(math.mod(value + math.PI, math.TAU))
+	return result - math.PI
+}
+
 import "core:testing"
 
 @(test)
@@ -129,3 +135,4 @@ clamp_test :: proc(t: ^testing.T) {
 	testing.expect(t, clamp(-1, 0, 1) == 0)
 	testing.expect(t, clamp(-1.2, 0, 1) == 0)
 }
+

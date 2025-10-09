@@ -186,51 +186,26 @@ vertex_to_screen :: proc(vertex: Vec3, transform: Transform, position: Vec3) -> 
 	return num_pixels / 2 + pixel_offset
 }
 
-// TODO: figure out in details!!!
-// Research:
-// - World Space
-// - Object Space
-// - Local Space
 point_to_world :: proc(point: Vec3, using transform: Transform, position: Vec3) -> Vec3 {
 	using math
-
-	// TODO: rework to just matrix multiplications
-	// i_hat_yaw := Vec3{cos(yaw), 0, sin(yaw)}
-	// j_hat_yaw := Vec3{0, 1, 0}
-	// k_hat_yaw := Vec3{-sin(yaw), 0, cos(yaw)}
 
 	m_yaw := matrix[3, 3]f32{
 		cos(yaw), 0, sin(yaw),
 		0, 1, 0,
 		-sin(yaw), 0, cos(yaw),
 	}
-
-	// i_hat_pitch := Vec3{1, 0, 0}
-	// j_hat_pitch := Vec3{0, cos(pitch), -sin(pitch)}
-	// k_hat_pitch := Vec3{0, sin(pitch), cos(pitch)}
-
 	m_pitch := matrix[3, 3]f32{
 		1, 0, 0,
 		0, cos(pitch), -sin(pitch),
 		0, sin(pitch), cos(pitch),
 	}
-
-	// i_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, i_hat_pitch)
-	// j_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, j_hat_pitch)
-	// k_hat := transform_vec(i_hat_yaw, j_hat_yaw, k_hat_yaw, k_hat_pitch)
-
 	m_roll := matrix[3, 3]f32{
 		cos(roll), -sin(roll), 0,
 		sin(roll), cos(roll), 0,
 		0, 0, 1,
 	}
 
-	// return transform_vec(i_hat, j_hat, k_hat, point) + position
-	return m_roll * m_pitch * (m_yaw * point) + position
-}
-
-transform_vec :: proc(i_hat, j_hat, k_hat, v: Vec3) -> Vec3 {
-	return v.x * i_hat + v.y * j_hat + v.z * k_hat
+	return m_roll * m_pitch * m_yaw * point + position
 }
 
 scene_to_pixels :: proc(using scene: Scene) -> (tb_arr: [W * H * 4]byte) {
