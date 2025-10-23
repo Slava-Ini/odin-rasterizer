@@ -15,9 +15,9 @@ point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
 	//    Find on which side of every edge the point is using dot product and rotation
 	return edge_function_dot_product(tri, p)
 
-	// -- Method 3: Edge function using cross product
-	//    Find on which side of every edge the point is using cross product
-	// return edge_function_cross_product(tri, p)
+	// -- Method 3: Edge function using determinant
+	//    Find on which side of every edge the point is using determinant
+	// return edge_function_determinant(tri, p)
 
 	// -- Method 4: Barycentric Coordinates
 	//    Find barycentric weights to determine wheather the point is in triangle
@@ -96,7 +96,7 @@ ray_casting :: proc(tri: Triangle, p: Vec2) -> bool {
 	return c % 2 == 1
 }
 
-edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
+edge_function_determinant :: proc(tri: Triangle, p: Vec2) -> bool {
 	xp, yp := p.x, p.y
 	edges := [3][2]Vec2{[2]Vec2{tri.a, tri.b}, [2]Vec2{tri.b, tri.c}, [2]Vec2{tri.c, tri.a}}
 	res := [3]bool{}
@@ -105,9 +105,13 @@ edge_function_cross_product :: proc(tri: Triangle, p: Vec2) -> bool {
 		x1, y1 := e[0].x, e[0].y
 		x2, y2 := e[1].x, e[1].y
 
-		cross_product := (x2 - x1) * (yp - y1) - (y2 - y1) * (xp - x1)
+		// det(m) = ad - bc
+		// Note: two vectors just represent a matrix transform, where
+		//      i-hat -> x1,y1 to xp, yp
+		//      j-hat -> x1,y1 to x2, y2
+		determinant := (x2 - x1) * (yp - y1) - (y2 - y1) * (xp - x1)
 
-		res[index] = cross_product >= 0
+		res[index] = determinant >= 0
 	}
 
 	// Note: Can be improved by checking if all three are either bool
