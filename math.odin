@@ -5,6 +5,51 @@ import math "core:math/linalg"
 Vec2 :: [2]f32
 Vec3 :: [3]f32
 
+// Quaternion utility functions
+
+// Create a quaternion from axis-angle representation
+// axis: normalized rotation axis (Vec3)
+// angle: rotation angle in radians
+quat_from_axis_angle :: proc(axis: Vec3, angle: f32) -> quaternion128 {
+	// Use Odin's built-in function
+	return math.quaternion_angle_axis_f32(angle, axis)
+}
+
+// Convert quaternion to 3x3 rotation matrix
+quat_to_matrix3 :: proc(q: quaternion128) -> matrix[3, 3]f32 {
+	// Use Odin's built-in function
+	return math.matrix3_from_quaternion_f32(q)
+}
+
+// Convert quaternion to Euler angles for debugging/display
+// Returns (yaw, pitch, roll) in radians
+quat_to_euler :: proc(q: quaternion128) -> (yaw, pitch, roll: f32) {
+	w := real(q)
+	x := imag(q)
+	y := jmag(q)
+	z := kmag(q)
+
+	// Roll (x-axis rotation)
+	sinr_cosp := 2 * (w * x + y * z)
+	cosr_cosp := 1 - 2 * (x * x + y * y)
+	roll = math.atan2(sinr_cosp, cosr_cosp)
+
+	// Pitch (y-axis rotation)
+	sinp := 2 * (w * y - z * x)
+	if abs(sinp) >= 1 {
+		pitch = math.sign(sinp) * math.PI / 2 // use 90 degrees if out of range
+	} else {
+		pitch = math.asin(sinp)
+	}
+
+	// Yaw (z-axis rotation)
+	siny_cosp := 2 * (w * z + x * y)
+	cosy_cosp := 1 - 2 * (y * y + z * z)
+	yaw = math.atan2(siny_cosp, cosy_cosp)
+
+	return
+}
+
 point_in_triangle :: proc(tri: Triangle, p: Vec2) -> bool {
 	// -- Method 1: Ray Casting
 	//    Cast a ray in random direction to count how many times the ray intersects the triangle

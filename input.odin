@@ -1,6 +1,7 @@
 package rasterizer
 
 import rl "vendor:raylib"
+import math "core:math/linalg"
 
 TRANSFORM_SPEED: f32 : 0.05
 MOVE_SPEED: f32 : 0.03
@@ -11,23 +12,44 @@ handle_input :: proc(state: ^State) {
 }
 
 update_transform :: proc(using state: ^State) {
+	// Apply incremental rotations using quaternion multiplication
+	// Each key press creates a small rotation quaternion and multiplies it with the current rotation
+
 	if rl.IsKeyDown(.LEFT) {
-		transform.yaw = limit_to_pi(transform.yaw + TRANSFORM_SPEED)
+		// Rotate around Y-axis (yaw left)
+		delta_rotation := quat_from_axis_angle(Vec3{0, 1, 0}, TRANSFORM_SPEED)
+		transform.rotation = math.mul(delta_rotation, transform.rotation)
+		transform.rotation = math.quaternion_normalize(transform.rotation)
 	}
 	if rl.IsKeyDown(.RIGHT) {
-		transform.yaw = limit_to_pi(transform.yaw - TRANSFORM_SPEED)
+		// Rotate around Y-axis (yaw right)
+		delta_rotation := quat_from_axis_angle(Vec3{0, 1, 0}, -TRANSFORM_SPEED)
+		transform.rotation = math.mul(delta_rotation, transform.rotation)
+		transform.rotation = math.quaternion_normalize(transform.rotation)
 	}
 	if rl.IsKeyDown(.UP) {
-		transform.pitch = limit_to_pi(transform.pitch + TRANSFORM_SPEED)
+		// Rotate around X-axis (pitch up)
+		delta_rotation := quat_from_axis_angle(Vec3{1, 0, 0}, TRANSFORM_SPEED)
+		transform.rotation = math.mul(delta_rotation, transform.rotation)
+		transform.rotation = math.quaternion_normalize(transform.rotation)
 	}
 	if rl.IsKeyDown(.DOWN) {
-		transform.pitch = limit_to_pi(transform.pitch - TRANSFORM_SPEED)
+		// Rotate around X-axis (pitch down)
+		delta_rotation := quat_from_axis_angle(Vec3{1, 0, 0}, -TRANSFORM_SPEED)
+		transform.rotation = math.mul(delta_rotation, transform.rotation)
+		transform.rotation = math.quaternion_normalize(transform.rotation)
 	}
 	if rl.IsKeyDown(.Q) {
-		transform.roll = limit_to_pi(transform.roll + TRANSFORM_SPEED)
+		// Rotate around Z-axis (roll counter-clockwise)
+		delta_rotation := quat_from_axis_angle(Vec3{0, 0, 1}, TRANSFORM_SPEED)
+		transform.rotation = math.mul(delta_rotation, transform.rotation)
+		transform.rotation = math.quaternion_normalize(transform.rotation)
 	}
 	if rl.IsKeyDown(.E) {
-		transform.roll = limit_to_pi(transform.roll - TRANSFORM_SPEED)
+		// Rotate around Z-axis (roll clockwise)
+		delta_rotation := quat_from_axis_angle(Vec3{0, 0, 1}, -TRANSFORM_SPEED)
+		transform.rotation = math.mul(delta_rotation, transform.rotation)
+		transform.rotation = math.quaternion_normalize(transform.rotation)
 	}
 }
 

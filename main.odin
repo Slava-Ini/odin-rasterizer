@@ -12,11 +12,10 @@ import "core:time"
 
 import rl "vendor:raylib"
 
-// TODO:
-// When working with transformation research
-// - Euler Angle xyz -> Gimbal lock
-// - Quaternion wxyz
-// - Axis Angle wxyz - https://en.wikipedia.org/wiki/Rotation_matrix
+// Rotation implementation:
+// ✓ Quaternion wxyz - No gimbal lock!
+// Previous: Euler Angle xyz - Had gimbal lock issue
+// Alternative: Axis Angle wxyz - https://en.wikipedia.org/wiki/Rotation_matrix
 
 Color :: distinct [4]u8
 // TODO: to remove all triangles in favor of Vec3
@@ -31,9 +30,7 @@ Scene :: struct {
 	colors: [W * H]Vec3,
 }
 Transform :: struct {
-	yaw:   f32,
-	pitch: f32,
-	roll:  f32,
+	rotation: quaternion128,
 }
 State :: struct {
 	transform: Transform,
@@ -53,7 +50,7 @@ W, H :: 64, 64
 //   disabling `vertex_to_screen` 
 
 state := State {
-	transform = Transform{},
+	transform = Transform{rotation = quaternion128(1)}, // Identity quaternion
 	position = Vec3{0, 0, -2},
 }
 
@@ -187,25 +184,11 @@ vertex_to_screen :: proc(vertex: Vec3, transform: Transform, position: Vec3) -> 
 }
 
 point_to_world :: proc(point: Vec3, using transform: Transform, position: Vec3) -> Vec3 {
-	using math
+	// Convert quaternion to rotation matrix
+	rotation_matrix := quat_to_matrix3(rotation)
 
-	m_yaw := matrix[3, 3]f32{
-		cos(yaw), 0, sin(yaw),
-		0, 1, 0,
-		-sin(yaw), 0, cos(yaw),
-	}
-	m_pitch := matrix[3, 3]f32{
-		1, 0, 0,
-		0, cos(pitch), -sin(pitch),
-		0, sin(pitch), cos(pitch),
-	}
-	m_roll := matrix[3, 3]f32{
-		cos(roll), -sin(roll), 0,
-		sin(roll), cos(roll), 0,
-		0, 0, 1,
-	}
-
-	return m_roll * m_pitch * m_yaw * point + position
+	// Apply rotation and translation
+	return rotation_matrix * point + position
 }
 
 scene_to_pixels :: proc(using scene: Scene) -> (tb_arr: [W * H * 4]byte) {
