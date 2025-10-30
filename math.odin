@@ -139,4 +139,3 @@ clamp_test :: proc(t: ^testing.T) {
 	testing.expect(t, clamp(-1, 0, 1) == 0)
 	testing.expect(t, clamp(-1.2, 0, 1) == 0)
 }
-

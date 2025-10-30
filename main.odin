@@ -16,7 +16,7 @@ import rl "vendor:raylib"
 // When working with transformation research
 // - Euler Angle xyz -> Gimbal lock
 // - Quaternion wxyz
-// - Axis Angle wxyz
+// - Axis Angle wxyz - https://en.wikipedia.org/wiki/Rotation_matrix
 
 Color :: distinct [4]u8
 // TODO: to remove all triangles in favor of Vec3
@@ -54,13 +54,13 @@ W, H :: 64, 64
 
 state := State {
 	transform = Transform{},
-	position  = Vec3{0, 0, -2},
+	position = Vec3{0, 0, -2},
 }
 
 main :: proc() {
 	rl.InitWindow(1_000, 1_000, "Odin Rasterizer")
 	texture := rl.LoadTextureFromImage(rl.GenImageColor(W, H, rl.BLACK))
-	rl.SetTextureFilter(texture, rl.TextureFilter.POINT)
+	rl.SetTextureFilter(texture, rl.TextureFilter.BILINEAR)
 
 	vertices, ok := load_obj_file("cube.obj")
 
